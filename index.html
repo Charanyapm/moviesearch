@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Details</title>
+    <!-- <link rel="stylesheet" href="styles.css"> -->
+</head>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f8f8f8;
+    }
+
+    header {
+        background-color: #333;
+        color: #fff;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    h1 {
+        margin: 0;
+    }
+
+    .search-container {
+        margin-top: 1rem;
+        display: flex;
+        justify-content: center;
+    }
+
+    #search {
+        padding: 0.5rem;
+        font-size: 1rem;
+    }
+
+    #search-btn {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+    }
+
+    #search-btn:hover {
+        background-color: #0056b3;
+    }
+
+    #movie-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        padding: 1rem;
+        margin: 1rem;
+    }
+
+    .movie-card {
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-radius: 5px;
+        padding: 1rem;
+    }
+
+    .movie-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    .movie-year {
+        font-size: 1rem;
+        color: #777;
+    }
+
+    .movie-description {
+        margin-top: 0.5rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #555;
+    }
+
+    .movie-img {
+        width: 12rem;
+        height: 17rem;
+    }
+
+    .mess-title {
+        font-size: xxx-large;
+        display: flex;
+        justify-content: center;
+        font-family: cursive;
+    }
+
+    .arrow_btn {
+        width: 4rem;
+    }
+    .page{
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+    }
+</style>
+
+<body>
+    <header>
+        <h1>Movie Details</h1>
+        <div class="search-container">
+            <input type="text" id="search" placeholder="Search...">
+            <button id="search-btn">Search</button>
+        </div>
+    </header>
+    <main id="movie-list">
+        <!-- Movie cards will be dynamically added here -->
+        <div id="messages">
+            <!-- if there is no response from the API the messages will loaded dynamically -->
+        </div>
+    </main>
+    <div class="page">
+        <img onclick="pageChange('prev')" class="arrow_btn" src="./left-arrow.svg" alt="">
+        <img onclick="pageChange('next')" class="arrow_btn" src="./right-arrow.svg" alt="">
+    </div>
+    <!-- <script src="script.js"></script> -->
+    <script>
+
+        const movieList = document.getElementById('movie-list');
+        const searchInput = document.getElementById('search');
+        const searchButton = document.getElementById('search-btn');
+        const message = document.getElementById("messages");
+        let pageCount = 1;
+        let searchData;
+        let totalPageCount;
+
+        // Function to generate movie cards and add them to the movie list
+        function generateMovieCards(movieData) {
+            movieList.innerHTML = '';
+
+            movieData.forEach((movie) => {
+                const card = document.createElement('div');
+                card.classList.add('movie-card');
+
+                const title = document.createElement('div');
+                title.classList.add('movie-title');
+                title.textContent = movie.Title;
+
+                const year = document.createElement('div');
+                year.classList.add('movie-year');
+                year.textContent = movie.Year;
+
+                const description = document.createElement('div');
+                description.classList.add('movie-description');
+                description.textContent = movie.description;
+
+                const img = document.createElement("img");
+                img.classList.add("movie-img");
+                img.src = movie.Poster;
+
+                card.appendChild(title);
+                card.appendChild(year);
+                card.appendChild(description);
+                card.appendChild(img);
+
+                movieList.appendChild(card);
+            });
+        };
+
+        const userAction = async () => {
+            const response = await fetch(`http://www.omdbapi.com/?apikey=663bfe75&s=${searchData}&page=${pageCount}`);
+            const myJson = await response.json(); 
+            //extract JSON from the http response
+            // do something with myJson
+            if (myJson.Response === "True") {
+                generateMovieCards(myJson.Search);
+                totalPageCount = parseInt(myJson.totalResults);
+                errorMessages("true");
+            } else {
+                generateMovieCards([]);
+                alert(myJson.Error);
+            }
+        };
+
+        // Event listener for search button click
+        searchButton.addEventListener('click', () => {
+            const searchQuery = searchInput.value.trim();
+            searchData = searchQuery
+            userAction();
+        });
+
+        function errorMessages(e) {
+            const messTitle = document.createElement('div');
+            messTitle.classList.add('mess-title');
+            if (e === "true") {
+                messTitle.textContent = " ";
+            } else {
+                messTitle.textContent = "Search your movies in the search box";
+            };
+            message.appendChild(messTitle);
+        };
+
+        function pageChange(e){
+            console.log(Math.round(totalPageCount/10),"cherry");
+            if(e === "next" && pageCount < Math.round(totalPageCount/10)){
+                pageCount = pageCount+1 ;
+                userAction();
+            };
+            if(e === "prev" && pageCount > 1){
+                pageCount = pageCount-1 ;
+                userAction();
+            };
+        }
+
+        // initial renderring
+        errorMessages("");
+
+    </script>
+</body>
+
+</html>
